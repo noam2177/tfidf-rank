@@ -55,6 +55,32 @@ def cosine(left: dict[str, float], right: dict[str, float]) -> float:
     return dot / (left_norm * right_norm)
 
 
+def char_trigrams(text: str) -> set[str]:
+    grams: set[str] = set()
+    for token in tokenize(text):
+        if len(token) < 3:
+            if token:
+                grams.add(token)
+            continue
+        grams.update(token[index : index + 3] for index in range(len(token) - 2))
+    return grams
+
+
+def overlap(left: set[str], right: set[str]) -> float:
+    """Share of the shorter trigram set that also sits in the longer one."""
+    if not left or not right:
+        return 0.0
+    return len(left & right) / min(len(left), len(right))
+
+
+def dice(left: set[str], right: set[str]) -> float:
+    if not left and not right:
+        return 1.0
+    if not left or not right:
+        return 0.0
+    return 2 * len(left & right) / (len(left) + len(right))
+
+
 def jaccard(left: list[str], right: list[str]) -> float:
     a, b = set(left), set(right)
     if not a and not b:
@@ -76,6 +102,8 @@ def rank(query: str, docs: list[str]) -> list[dict[str, float | int]]:
                 "index": index,
                 "cosine": cosine(query_vec, tfidf(tokens, weights)),
                 "jaccard": jaccard(query_tokens, tokens),
+                "dice": dice(char_trigrams(query), char_trigrams(docs[index])),
+                "overlap": overlap(char_trigrams(query), char_trigrams(docs[index])),
             }
         )
     rows.sort(key=lambda row: (-float(row["cosine"]), int(row["index"])))
@@ -86,7 +114,9 @@ def format_report(query: str, docs: list[str]) -> str:
     lines = [f"query={query}"]
     for row in rank(query, docs):
         lines.append(
-            f"{int(row['index'])}  cosine={float(row['cosine']):.3f}  jaccard={float(row['jaccard']):.3f}"
+            f"{int(row['index'])}  cosine={float(row['cosine']):.3f}  "
+            f"jaccard={float(row['jaccard']):.3f}  dice={float(row['dice']):.3f}  "
+            f"overlap={float(row['overlap']):.3f}"
         )
     return "\n".join(lines)
 
@@ -94,6 +124,7 @@ def format_report(query: str, docs: list[str]) -> str:
 def main() -> None:
     print(format_report(QUERY, list(DOCS[:2])))
     print(format_report(HE_QUERY, list(DOCS[2:])))
+    print(format_report("חתול", list(DOCS[2:])))
 
 
 if __name__ == "__main__":

@@ -38,6 +38,15 @@ class RankTests(unittest.TestCase):
         self.assertAlmostEqual(jaccard(["alpha", "alpha", "beta"], ["alpha", "alpha", "alpha"]), 0.5)
         self.assertAlmostEqual(jaccard(["alpha", "alpha", "beta"], ["alpha", "beta", "gamma"]), 2 / 3)
 
+    def test_trigram_dice_sees_past_the_article(self) -> None:
+        rows = rank("חתול", ["החתול ישן", "כלב רץ"])
+        by_index = {int(row["index"]): row for row in rows}
+        self.assertEqual(by_index[0]["cosine"], 0.0)
+        self.assertAlmostEqual(float(by_index[0]["dice"]), 2 / 3)
+        self.assertAlmostEqual(float(by_index[0]["overlap"]), 1.0)
+        self.assertEqual(by_index[1]["dice"], 0.0)
+        self.assertEqual(by_index[1]["overlap"], 0.0)
+
     def test_empty_query(self) -> None:
         rows = rank("", ["alpha"])
         self.assertEqual(rows[0]["cosine"], 0.0)
