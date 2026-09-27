@@ -110,6 +110,14 @@ def rank(query: str, docs: list[str]) -> list[dict[str, float | int]]:
     return rows
 
 
+def disagree(query: str, docs: list[str]) -> tuple[int, int]:
+    """Cosine winner, then Jaccard winner. Same index when the two metrics agree."""
+    rows = rank(query, docs)
+    cosine_winner = int(rows[0]["index"])
+    jaccard_winner = max(rows, key=lambda row: (float(row["jaccard"]), -int(row["index"])))
+    return cosine_winner, int(jaccard_winner["index"])
+
+
 def format_report(query: str, docs: list[str]) -> str:
     lines = [f"query={query}"]
     for row in rank(query, docs):

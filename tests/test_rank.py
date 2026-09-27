@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from rank import cosine, idf_map, jaccard, rank, tfidf, tokenize
+from rank import cosine, disagree, idf_map, jaccard, rank, tfidf, tokenize
 
 
 class RankTests(unittest.TestCase):
@@ -23,6 +23,7 @@ class RankTests(unittest.TestCase):
         by_index = {int(row["index"]): row for row in rows}
         self.assertGreater(by_index[0]["cosine"], by_index[1]["cosine"])
         self.assertGreater(by_index[1]["jaccard"], by_index[0]["jaccard"])
+        self.assertEqual(disagree("alpha alpha beta", docs), (0, 1))
 
     def test_one_shared_rare_term(self) -> None:
         docs = ["a a", "a b"]
